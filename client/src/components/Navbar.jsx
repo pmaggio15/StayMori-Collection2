@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { assets } from '../../client/src/assets/assets';
+import { assets } from '../assets/assets';
 import { useClerk, useUser, UserButton } from '@clerk/clerk-react';
 
 const BookIcon = () => (
