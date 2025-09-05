@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast'
 import { useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 
-axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE;
 
 const AppContext = createContext();
 
@@ -19,7 +19,7 @@ export const AppProvider = ({ children }) => {
     const [isOwner, setIsOwner] = useState(false);
     const [showHotelReg, setShowHotelReg] = useState(false);
     const [rooms, setRooms] = useState([]);
-    const [searchedCities, setSearchedCities] = useState([]); // max 3 recent searched cities
+    const [searchedCities, setSearchedCities] = useState([]); 
 
     const facilityIcons = {
         "Free WiFi": assets.freeWifiIcon,
