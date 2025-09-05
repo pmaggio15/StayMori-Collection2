@@ -155,21 +155,18 @@ const HotelReg = ({ onClose }) => {
                 </div>
 
                 {/* City */}
-                <div>
-                  <label htmlFor="city" className='block text-sm font-semibold text-gray-700 mb-2'>
-                    City *
-                  </label>
-                  <select
-                    id="city"
-                    className='w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-light text-gray-900 bg-white'
-                    required
-                  >
-                    <option value="" className='text-gray-400'>Select your city</option>
-                    {cities.map((city) => (
-                      <option key={city} value={city} className='text-gray-900'>{city}</option>
-                    ))}
-                  </select>
-                </div>
+                  <div>
+                    <label htmlFor="city" className='block text-sm font-semibold text-gray-700 mb-2'>
+                      City
+                    </label>
+                    <input
+                      id='City'
+                      type="text"
+                      placeholder='Enter your city'
+                      className='w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-light text-gray-900 placeholder-gray-400'
+                      required
+                    />
+                  </div>
 
                 {/* Submit */}
                 <div className='pt-4'>
@@ -202,3 +199,4 @@ const HotelReg = ({ onClose }) => {
 };
 
 export default HotelReg;
+

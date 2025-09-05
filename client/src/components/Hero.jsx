@@ -183,7 +183,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { cities, roomsDummyData } from "../assets/assets";
+import { cities } from "../assets/assets";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -196,28 +196,39 @@ const Hero = () => {
     setSearchData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // City code mapping for Amadeus API
+  const getCityCode = (cityName) => {
+    const cityCodeMap = {
+      "New York": "NYC",
+      "Dubai": "DXB", 
+      "Singapore": "SIN",
+      "London": "LON",
+      "Paris": "PAR",
+      "Tokyo": "NRT",
+      "Los Angeles": "LAX",
+      "Miami": "MIA"
+    };
+    
+    // Return the mapped code or default to the first 3 letters uppercase
+    return cityCodeMap[cityName] || cityName.substring(0, 3).toUpperCase();
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
 
-    // Filter rooms (adjust logic as needed)
-    let filteredRooms = roomsDummyData.filter((room) => {
-      const cityMatch =
-        !searchData.destination ||
-        room.hotel.city.toLowerCase().includes(searchData.destination.toLowerCase());
-      return cityMatch && room.isAvailable;
-    });
+    // Get city code for Amadeus API
+    const cityCode = searchData.destination ? getCityCode(searchData.destination) : "NYC";
 
-    if (!searchData.destination) {
-      filteredRooms = roomsDummyData.filter((room) => room.isAvailable);
-    }
-
-    // Navigate to /search with data in navigation state
+    // Navigate to search results page with search parameters
     navigate("/search", {
-      state: { rooms: filteredRooms, searchCriteria: searchData },
+      state: { 
+        city: cityCode,
+        cityName: searchData.destination || "New York",
+        checkIn: searchData.checkIn,
+        checkOut: searchData.checkOut,
+        guests: searchData.guests
+      }
     });
-
-    // (Optional) scroll to top after navigation
-    // setTimeout(() => window.scrollTo(0, 0), 0);
   };
 
   return (
@@ -282,6 +293,7 @@ const Hero = () => {
                 type="date"
                 value={searchData.checkIn}
                 onChange={handleInputChange}
+                min={new Date().toISOString().split('T')[0]}
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               />
             </div>
@@ -290,7 +302,7 @@ const Hero = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-gray-600">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <label htmlFor="checkOut" className="text-sm font-medium">Check out</label>
               </div>
@@ -300,6 +312,7 @@ const Hero = () => {
                 type="date"
                 value={searchData.checkOut}
                 onChange={handleInputChange}
+                min={searchData.checkIn || new Date().toISOString().split('T')[0]}
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               />
             </div>

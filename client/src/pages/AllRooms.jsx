@@ -324,3 +324,5 @@ const fetchRooms = async () => {
 }
 
 export default AllRooms
+
+
