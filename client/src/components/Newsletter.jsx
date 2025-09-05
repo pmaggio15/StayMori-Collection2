@@ -3,8 +3,7 @@ import { assets } from '../assets/assets.js';
 import Title from './Title.jsx';
 
 const Newsletter = () => {
-  // No TypeScript generic here — plain JSX
-  const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'done'
+  const [status, setStatus] = useState('idle'); 
   const [email, setEmail] = useState('');
 
   const handleSubmit = (e) => {
@@ -12,7 +11,6 @@ const Newsletter = () => {
     if (!email) return;
     setStatus('loading');
 
-    // simulate request
     setTimeout(() => {
       setStatus('done');
     }, 1200);

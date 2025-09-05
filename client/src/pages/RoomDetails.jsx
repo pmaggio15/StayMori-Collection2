@@ -5,9 +5,11 @@ import StarRating from '../components/StarRating'
 import { assets } from '../assets/assets'
 
 const RoomDetails = () => {
-    const {id} = useParams()
+    const { id } = useParams()
     const [room, setRoom] = useState(null)
     const [mainImage, setMainImage] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
     const [availabilityStatus, setAvailabilityStatus] = useState(null)
     const [isChecking, setIsChecking] = useState(false)
     const [formData, setFormData] = useState({
@@ -16,44 +18,81 @@ const RoomDetails = () => {
         guests: 1
     })
 
-   useEffect(() => {
-    fetchRoomDetails()
-}, [id])
+    // API Base URL (same as your other components)
+    const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
-const fetchRoomDetails = async () => {
-    try {
-        // For now, fetch from hotels API and find matching hotel
-        const response = await fetch('/api/amadeus/hotels?cityCode=NYC')
-        const data = await response.json()
-        
-        // Find hotel that matches the ID
-        const foundHotel = data.data.find(hotel => hotel.hotel.hotelId === id)
-        
-        if (foundHotel) {
-            const roomData = {
-                _id: foundHotel.hotel.hotelId,
-                hotel: {
-                    name: foundHotel.hotel.name,
-                    address: foundHotel.hotel.address ? 
-                        `${foundHotel.hotel.address.lines?.[0] || ''}, ${foundHotel.hotel.address.cityName || ''}` : 
-                        'Address not available',
-                    owner: {
-                        image: '/assets/hotel-placeholder.jpg' // You'll need a default owner image
+    useEffect(() => {
+        fetchRoomDetails()
+    }, [id])
+
+    const fetchRoomDetails = async () => {
+        try {
+            setLoading(true)
+            setError(null)
+            
+            // Try multiple city codes to find the hotel
+            const cityCodes = ['NYC', 'DXB', 'SIN', 'LON', 'PAR']
+            let foundHotel = null
+            
+            for (const cityCode of cityCodes) {
+                try {
+                    const url = new URL("/api/amadeus/hotels", API_BASE);
+                    url.searchParams.set("cityCode", cityCode);
+                    
+                    const response = await fetch(url.toString())
+                    
+                    if (response.ok) {
+                        const data = await response.json()
+                        
+                        // Find hotel that matches the ID
+                        foundHotel = data.data?.find(hotel => hotel.hotel.hotelId === id)
+                        
+                        if (foundHotel) {
+                            break // Found the hotel, stop searching
+                        }
                     }
-                },
-                roomType: foundHotel.offers?.[0]?.room?.typeEstimated?.category || 'Standard',
-                pricePerNight: foundHotel.offers?.[0]?.price?.total || 200,
-                amenities: ['Free WiFi', 'Room Service', 'Pool Access'],
-                images: ['/assets/hotel-placeholder.jpg'], // You'll need placeholder images
-                isAvailable: true
+                } catch (err) {
+                    console.log(`Failed to search in ${cityCode}:`, err)
+                    continue // Try next city
+                }
             }
-            setRoom(roomData)
-            setMainImage(roomData.images[0])
+            
+            if (foundHotel) {
+                // Transform the API data to match your component structure
+                const roomData = {
+                    _id: foundHotel.hotel.hotelId,
+                    hotel: {
+                        name: foundHotel.hotel.name,
+                        address: foundHotel.hotel.address?.cityName || 'Address not available',
+                        owner: {
+                            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
+                        }
+                    },
+                    roomType: foundHotel.offers?.[0]?.room?.typeEstimated?.category || 'Luxury Suite',
+                    pricePerNight: foundHotel.offers?.[0]?.price?.total || foundHotel.offers?.[0]?.price?.base || 200,
+                    amenities: ['Free WiFi', 'Room Service', 'Pool Access', 'Mountain View', 'Free Breakfast'],
+                    images: foundHotel.images || [
+                        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop'
+                    ],
+                    isAvailable: true,
+                    currency: foundHotel.offers?.[0]?.price?.currency || 'USD'
+                }
+                
+                setRoom(roomData)
+                setMainImage(roomData.images[0])
+            } else {
+                setError('Hotel not found')
+            }
+        } catch (error) {
+            console.error('Failed to fetch room details:', error)
+            setError('Failed to load hotel details')
+        } finally {
+            setLoading(false)
         }
-    } catch (error) {
-        console.error('Failed to fetch room details:', error)
     }
-}
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
@@ -102,7 +141,6 @@ const fetchRoomDetails = async () => {
 
         // Simulate API call delay
         setTimeout(() => {
-            // Check if room is available (using room.isAvailable from dummy data)
             if (room && room.isAvailable) {
                 const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24))
                 const totalPrice = nights * room.pricePerNight
@@ -125,7 +163,41 @@ const fetchRoomDetails = async () => {
                 })
             }
             setIsChecking(false)
-        }, 1500) // 1.5 second delay to simulate loading
+        }, 1500)
+    }
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className='py-28 md:py-35 px-4 md:px-16 lg:px-24 xl:px-32'>
+                <div className="animate-pulse">
+                    <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
+                    <div className="h-64 bg-gray-200 rounded-xl mb-6"></div>
+                    <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                </div>
+            </div>
+        )
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className='py-28 md:py-35 px-4 md:px-16 lg:px-24 xl:px-32'>
+                <div className="text-center">
+                    <div className="text-red-600 text-xl mb-4">{error}</div>
+                    <button 
+                        onClick={fetchRoomDetails}
+                        className="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        )
     }
 
     return room && (
@@ -151,15 +223,19 @@ const fetchRoomDetails = async () => {
             {/*Room images */}
             <div className='flex flex-col lg:flex-row mt-6 gap-6'>
                 <div className='lg:w-1/2 w-full'>
-                    <img src={mainImage} alt="Room Image" className='w-full rounded-xl shadow-lg object-cover' />
+                    <img src={mainImage} alt="Room Image" className='w-full h-80 lg:h-96 rounded-xl shadow-lg object-cover' />
                 </div>
                 <div className='grid grid-cols-2 gap-4 lg:w-1/2 w-full'>
-                    {room?.images.length > 1 && room.images.map((image,index) => (
-                        <img onClick={() => setMainImage(image)} 
+                    {room?.images.length > 1 && room.images.slice(0, 4).map((image, index) => (
+                        <img 
+                            onClick={() => setMainImage(image)} 
                             src={image} 
                             alt="Room Image" 
                             key={index} 
-                            className={`w-full rounded-xl shadow-md object-cover cursor-pointer ${mainImage === image ? 'outline outline-3 outline-gray-700' : 'hover:opacity-80'}`} />
+                            className={`w-full h-36 lg:h-44 rounded-xl shadow-md object-cover cursor-pointer transition-all ${
+                                mainImage === image ? 'outline outline-3 outline-gray-700' : 'hover:opacity-80'
+                            }`} 
+                        />
                     ))}
                 </div>
             </div>
@@ -182,7 +258,9 @@ const fetchRoomDetails = async () => {
                     </div>
                 </div>
                 {/*Room Price*/}
-                <p className='text-2xl font-medium'>${room.pricePerNight} /night</p>
+                <div className="text-right">
+                    <p className='text-2xl font-medium'>${room.pricePerNight} <span className="text-lg font-normal">/{room.currency === 'USD' ? 'night' : `night (${room.currency})`}</span></p>
+                </div>
             </div>
 
             {/* CheckIn Checkout Form*/}
@@ -197,6 +275,7 @@ const fetchRoomDetails = async () => {
                             name='checkInDate'
                             value={formData.checkInDate}
                             onChange={handleInputChange}
+                            min={new Date().toISOString().split('T')[0]}
                             placeholder='Check-In' 
                             className='w-full rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none focus:ring-2 focus:ring-blue-500' 
                             required 
@@ -211,6 +290,7 @@ const fetchRoomDetails = async () => {
                             name='checkOutDate'
                             value={formData.checkOutDate}
                             onChange={handleInputChange}
+                            min={formData.checkInDate || new Date().toISOString().split('T')[0]}
                             placeholder='Check-Out' 
                             className='w-full rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none focus:ring-2 focus:ring-blue-500' 
                             required 
@@ -307,7 +387,7 @@ const fetchRoomDetails = async () => {
             {/*Hosted By*/}
             <div className='flex flex-col items-start gap-4'>
                 <div className='flex gap-4'>
-                    <img src={room.hotel.owner.image} alt="Host" className='h-14 w-14 md:h-18 md:w-18 rounded-full' />
+                    <img src={room.hotel.owner.image} alt="Host" className='h-14 w-14 md:h-18 md:w-18 rounded-full object-cover' />
                     <div>
                         <p className='text-lg md:text-xl'>Hosted by {room.hotel.name}</p>
                         <div className='flex items-center mt-1'>

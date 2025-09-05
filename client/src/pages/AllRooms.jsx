@@ -41,18 +41,24 @@ const AllRooms = () => {
     const navigate = useNavigate();
     const [openFilters, setOpenFilters] = useState(false)
 
-    // Updated to match your dummy data
+    // API Base URL (same as your other components)
+    const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
+
+    // Filter options
     const roomTypes = [
-        "Single Bed",
-        "Double Bed"
+        "Luxury Suite",
+        "Standard",
+        "Premium",
+        "Deluxe"
     ];
 
-    // Updated price ranges to match your room prices
     const priceRanges = [
         "0-200",
         "200-300", 
         "300-400",
-        "400-500"
+        "400-500",
+        "500-600",
+        "600+"
     ];
 
     const sortOptions = [
@@ -61,49 +67,91 @@ const AllRooms = () => {
         "Newest First"
     ];
 
-    // Filter state
+    // State
     const [selectedTypes, setSelectedTypes] = useState([]);
     const [selectedRanges, setSelectedRanges] = useState([]);
     const [sortOption, setSortOption] = useState("");
-
-
     const [roomsData, setRoomsData] = useState([]);
-const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-useEffect(() => {
-    fetchRooms();
-}, []);
+    useEffect(() => {
+        fetchAllRooms();
+    }, []);
 
-const fetchRooms = async () => {
-    try {
-        setLoading(true);
-        const response = await fetch('/api/amadeus/hotels?cityCode=NYC');
-        const data = await response.json();
-        // Convert API data to match your room structure
-        const convertedRooms = data.data.map(hotel => ({
-            _id: hotel.hotel.hotelId,
-            hotel: {
-                name: hotel.hotel.name,
-                city: hotel.hotel.address?.cityName || 'Unknown',
-                address: hotel.hotel.address ? 
-                    `${hotel.hotel.address.lines?.[0] || ''}, ${hotel.hotel.address.cityName || ''}` : 
-                    'Address not available'
-            },
-            roomType: hotel.offers?.[0]?.room?.typeEstimated?.category || 'Standard',
-            pricePerNight: hotel.offers?.[0]?.price?.total || 200,
-            amenities: ['Free WiFi', 'Room Service', 'Pool Access'],
-            images: ['/assets/hotel-placeholder.jpg'], // You'll need to add a placeholder image
-            isAvailable: true,
-            createdAt: new Date().toISOString()
-        }));
-        setRoomsData(convertedRooms);
-    } catch (error) {
-        console.error('Failed to fetch rooms:', error);
-        setRoomsData([]); // Empty array if API fails
-    } finally {
-        setLoading(false);
-    }
-};
+    // Helper to normalize hotel data from Amadeus API
+    const normalizeHotels = (arr = []) => {
+        return arr.map((item) => {
+            const hotel = item?.hotel || {};
+            const offer = item?.offers?.[0] || {};
+            const price = offer?.price?.total ?? Math.floor(Math.random() * 500) + 200;
+            const currency = offer?.price?.currency ?? "USD";
+            const images = item?.images || [
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&h=300&fit=crop"
+            ];
+
+            return {
+                _id: hotel.hotelId || hotel.name || crypto.randomUUID?.() || Math.random().toString(36).slice(2),
+                hotel: {
+                    name: hotel.name || "Hotel",
+                    city: hotel.address?.cityName || "Featured Location",
+                    address: hotel.address?.cityName || "Featured Location",
+                },
+                roomType: ["Luxury Suite", "Standard", "Premium", "Deluxe"][Math.floor(Math.random() * 4)],
+                pricePerNight: price,
+                amenities: ["Free WiFi", "Room Service", "Pool Access", "Mountain View", "Free Breakfast"].slice(0, 3),
+                images: images,
+                isAvailable: true,
+                createdAt: new Date().toISOString(),
+                currency
+            };
+        });
+    };
+
+    const fetchAllRooms = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            // Fetch from multiple cities to get more hotels
+            const cityCodes = ['NYC', 'DXB', 'SIN', 'LON'];
+            let allHotels = [];
+            
+            for (const cityCode of cityCodes) {
+                try {
+                    const url = new URL("/api/amadeus/hotels", API_BASE);
+                    url.searchParams.set("cityCode", cityCode);
+                    
+                    const response = await fetch(url.toString());
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.data && Array.isArray(data.data)) {
+                            allHotels = [...allHotels, ...data.data];
+                        }
+                    }
+                } catch (err) {
+                    console.log(`Failed to fetch from ${cityCode}:`, err);
+                    continue;
+                }
+            }
+            
+            if (allHotels.length > 0) {
+                const normalizedRooms = normalizeHotels(allHotels);
+                setRoomsData(normalizedRooms);
+            } else {
+                setError('No hotels found');
+            }
+            
+        } catch (error) {
+            console.error('Failed to fetch rooms:', error);
+            setError('Failed to load hotels');
+            setRoomsData([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Filter handlers
     const handleTypeChange = (checked, type) => {
         setSelectedTypes(prev => 
@@ -129,6 +177,7 @@ const fetchRooms = async () => {
 
     // Helper to parse price ranges
     const rangeToTuple = (r) => {
+        if (r === "600+") return { min: 600, max: Infinity };
         const [min, max] = r.split("-").map(n => Number(n.trim()));
         return { min, max };
     };
@@ -151,7 +200,6 @@ const fetchRooms = async () => {
                 })
             );
         }
-        
 
         // Sort results
         if (sortOption === "Price Low to High") {
@@ -161,10 +209,53 @@ const fetchRooms = async () => {
         } else if (sortOption === "Newest First") {
             list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
-        
 
-        return list;
-    }, [selectedTypes, selectedRanges, sortOption]);
+        // Limit to maximum 6 hotels
+        return list.slice(0, 6);
+    }, [roomsData, selectedTypes, selectedRanges, sortOption]);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className='flex flex-col-reverse lg:flex-row items-start justify-between pt-28 md:pt-35 px-4 md:px-16 lg:px-24 xl:px-32'>
+                <div className='flex-1 lg:pr-10'>
+                    <div className="animate-pulse space-y-6">
+                        <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+                        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="flex gap-6 py-6 border-b">
+                                <div className="w-1/2 h-48 bg-gray-200 rounded-xl"></div>
+                                <div className="w-1/2 space-y-3">
+                                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className='w-full lg:w-80 h-96 bg-gray-200 rounded-lg animate-pulse'></div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className='flex flex-col-reverse lg:flex-row items-start justify-between pt-28 md:pt-35 px-4 md:px-16 lg:px-24 xl:px-32'>
+                <div className='flex-1 lg:pr-10 text-center'>
+                    <div className="text-red-600 text-xl mb-4">{error}</div>
+                    <button 
+                        onClick={fetchAllRooms}
+                        className="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className='flex flex-col-reverse lg:flex-row items-start justify-between pt-28 md:pt-35 px-4 md:px-16 lg:px-24 xl:px-32'>
@@ -324,5 +415,4 @@ const fetchRooms = async () => {
 }
 
 export default AllRooms
-
 
