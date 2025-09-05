@@ -15,6 +15,7 @@ import SearchResults from './components/SearchResults';
 import Hero from './components/Hero';
 import { useState } from 'react';
 import Experience from './pages/Experience';
+import { Toaster } from 'react-hot-toast';
 
 const App = () => {
   const isOwnerPath = useLocation().pathname.includes("owner");
@@ -32,9 +33,8 @@ const App = () => {
 
   return (
     <div>
+      <Toaster />
       {!isOwnerPath && <Navbar onOpenHotelReg={openHotelReg} />}
-      
-      {/* Hotel Registration Modal */}
       {showHotelReg && <HotelReg onClose={closeHotelReg} />}
       
       <div className='min-h-[70vh]'>
