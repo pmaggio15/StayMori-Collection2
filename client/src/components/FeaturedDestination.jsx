@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HotelCard from "./HotelCard";
-import { useAppContext } from "../context/AppContext";
+import { useAppContext } from "../context/AppContext.jsx";
 
 // API Base URL
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
