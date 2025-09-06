@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HotelCard from "./HotelCard";
-import { useAppContext } from "../context/AppContext.jsx";
+import { useappContext } from "../context/appContext.jsx";
 
 // API Base URL
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
@@ -76,7 +76,7 @@ const FeaturedDestination = ({
   searchGuests = 1,
   showAsSearch = false 
 }) => {
-  const { navigate } = useAppContext();
+  const { navigate } = useappContext();
   const [featuredRooms, setFeaturedRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");

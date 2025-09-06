@@ -7,7 +7,7 @@ import { assets } from "../assets/assets";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE;
 
-const AppContext = createContext();
+const appContext = createContext();
 
 export const AppProvider = ({ children }) => {
 
@@ -81,11 +81,11 @@ export const AppProvider = ({ children }) => {
     };
 
     return (
-        <AppContext.Provider value={value}>
+        <appContext.Provider value={value}>
             {children}
-        </AppContext.Provider>
+        </appContext.Provider>
     );
 
 };
 
-export const useAppContext = () => useContext(AppContext);
+export const useappContext = () => useContext(appContext);
