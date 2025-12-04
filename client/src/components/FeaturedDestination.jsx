@@ -3,74 +3,11 @@ import { useNavigate } from "react-router-dom";
 import HotelCard from "./HotelCard";
 import { useappContext } from "../context/appContext.jsx";
 
-// API Base URL
+// API Base URL - updated to use your backend
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
-// Helper to normalize hotel data from Amadeus API
-function normalizeHotels(arr = []) {
-  return arr.map((item) => {
-    const hotel = item?.hotel || {};
-    const offer = item?.offers?.[0] || {};
-    const price = offer?.price?.total ?? 200;
-    const currency = offer?.price?.currency ?? "USD";
-    const images = item?.images || [
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&h=300&fit=crop"
-    ];
-
-    const normalizedRoom = {
-      _id: hotel.hotelId || hotel.name || crypto.randomUUID?.() || Math.random().toString(36).slice(2),
-      hotel: {
-        name: hotel.name || "Hotel",
-        address: hotel.address?.cityName || "Featured Location",
-      },
-      pricePerNight: price,
-      currency,
-      images: images,
-    };
-
-    return normalizedRoom;
-  });
-}
-
-// Fetch hotels from Amadeus API
-async function fetchHotelsFromAmadeus(cityCode, checkIn = null, checkOut = null, guests = 1, { signal } = {}) {
-  if (!API_BASE) {
-    throw new Error("API_BASE is not configured. Please check your .env.local file.");
-  }
-
-  try {
-    const url = new URL("/api/amadeus/hotels", API_BASE);
-    url.searchParams.set("cityCode", cityCode);
-    
-    // Add optional search parameters
-    if (checkIn) url.searchParams.set("checkInDate", checkIn);
-    if (checkOut) url.searchParams.set("checkOutDate", checkOut);
-    if (guests > 1) url.searchParams.set("adults", guests.toString());
-
-    console.log("Fetching from URL:", url.toString());
-
-    const resp = await fetch(url.toString(), { signal });
-    const ct = resp.headers.get("content-type") || "";
-
-    if (!resp.ok) {
-      const txt = await resp.text().catch(() => "");
-      throw new Error(`HTTP ${resp.status} • ${txt.slice(0, 200)}`);
-    }
-    if (!ct.includes("application/json")) {
-      const txt = await resp.text().catch(() => "");
-      throw new Error(`Expected JSON, got ${ct || "unknown"} • ${txt.slice(0, 200)}`);
-    }
-
-    const payload = await resp.json();
-    return Array.isArray(payload?.data) ? payload.data : [];
-  } catch (error) {
-    console.error("fetchHotelsFromAmadeus error:", error);
-    throw error;
-  }
-}
-
 const FeaturedDestination = ({ 
-  searchCity = "NYC", 
+  searchCity = null, 
   searchCheckIn = null, 
   searchCheckOut = null, 
   searchGuests = 1,
@@ -89,51 +26,55 @@ const FeaturedDestination = ({
         setErr("");
         setLoading(true);
         
-        if (showAsSearch) {
-          // For search results, show hotels from the specific city
+        if (showAsSearch && searchCity) {
+          // For search results, filter by city
           try {
-            const raw = await fetchHotelsFromAmadeus(
-              searchCity, 
-              searchCheckIn, 
-              searchCheckOut, 
-              searchGuests,
+            const response = await fetch(
+              `${API_BASE}/api/rooms/city/${encodeURIComponent(searchCity)}`,
               { signal: ctrl.signal }
             );
             
-            const normalized = normalizeHotels(raw);
-            setFeaturedRooms(normalized);
-          } catch (amadeusError) {
-            console.warn("Amadeus API failed:", amadeusError);
+            if (!response.ok) {
+              throw new Error('Failed to fetch hotels');
+            }
+            
+            const data = await response.json();
+            
+            if (data.success && data.rooms) {
+              setFeaturedRooms(data.rooms);
+            } else {
+              setFeaturedRooms([]);
+            }
+          } catch (error) {
+            console.warn("API failed:", error);
             setErr("Unable to load hotels. Please try again later.");
             setFeaturedRooms([]);
           }
         } else {
-          // For featured destinations, get 1 hotel from each of 4 different cities
-          const featuredCities = ['NYC', 'DXB', 'SIN', 'LON'];
-          let allFeaturedHotels = [];
-          
-          for (const cityCode of featuredCities) {
-            try {
-              const raw = await fetchHotelsFromAmadeus(
-                cityCode, 
-                null, 
-                null, 
-                1,
-                { signal: ctrl.signal }
-              );
-              
-              const normalized = normalizeHotels(raw);
-              // Take only the first hotel from each city
-              if (normalized.length > 0) {
-                allFeaturedHotels.push(normalized[0]);
-              }
-            } catch (cityError) {
-              console.warn(`Failed to fetch from ${cityCode}:`, cityError);
-              continue;
+          // For featured destinations, get random featured rooms
+          try {
+            const response = await fetch(
+              `${API_BASE}/api/rooms/featured`,
+              { signal: ctrl.signal }
+            );
+            
+            if (!response.ok) {
+              throw new Error('Failed to fetch featured rooms');
             }
+            
+            const data = await response.json();
+            
+            if (data.success && data.rooms) {
+              // Limit to 4 rooms for featured section
+              setFeaturedRooms(data.rooms.slice(0, 4));
+            } else {
+              setFeaturedRooms([]);
+            }
+          } catch (error) {
+            console.warn("API failed:", error);
+            setErr("Unable to load hotels. Please try again later.");
+            setFeaturedRooms([]);
           }
-          
-          setFeaturedRooms(allFeaturedHotels);
         }
         
       } catch (e) {
@@ -211,7 +152,7 @@ const FeaturedDestination = ({
           <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-light">
             {showAsSearch 
               ? `Found ${featuredRooms.length} hotels matching your search criteria`
-              : "Discover our curated portfolio of luxury hotels worldwide, offering timeless elegance, refined comfort, and unforgettable stays."
+              : "Discover our curated collection of luxury accommodations across major cities, offering timeless elegance and unforgettable experiences."
             }
           </p>
         </div>
@@ -246,7 +187,7 @@ const FeaturedDestination = ({
               </button>
 
               <p className="text-sm text-gray-500 mt-3 max-w-md">
-                Explore our complete collection of luxury properties worldwide
+                Explore our complete collection of 19+ luxury properties worldwide
               </p>
             </div>
           </div>

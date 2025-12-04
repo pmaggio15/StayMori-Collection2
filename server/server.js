@@ -50,8 +50,8 @@ const PORT = process.env.PORT || 4000;
 const start = async () => {
   try {
     console.log("🚀 Starting API server…");
-    await connectDB();          // ⬅️ Mongo FIRST
-    connectCloudinary();        // ⬅️ Then Cloudinary
+    await connectDB();          
+    connectCloudinary();        
 
     app.listen(PORT, () => {
       console.log(`✅ API server running on port ${PORT}`);

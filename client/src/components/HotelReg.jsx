@@ -1,58 +1,95 @@
+import React, { useState } from "react";
+import axios from "axios";
+import { assets } from "../assets/assets";
 
-import React, { useState } from 'react';
-import { assets, cities } from '../assets/assets';
+const API_BASE = import.meta.env.VITE_API_BASE; // must be http://localhost:4000 in .env.local
 
 const HotelReg = ({ onClose }) => {
-  const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'done'
+  const [status, setStatus] = useState("idle"); // 'idle' | 'loading' | 'done'
+  const [name, setName] = useState("");
+  const [contact, setContact] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
 
-  const handleSubmit = (e) => {
+  const isLoading = status === "loading";
+  const isDone = status === "done";
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus('loading');
+    if (!name || !contact || !address || !city) return;
 
-    // simulate request
-    setTimeout(() => {
-      setStatus('done');
-    }, 1400);
+    setStatus("loading");
+
+    try {
+      const payload = { name, contact, address, city };
+
+      console.log("Submitting hotel payload:", payload);
+
+      const res = await axios.post(`${API_BASE}/api/hotels`, payload, {
+        withCredentials: true,
+      });
+
+      console.log("API response:", res.data);
+      setStatus("done");
+    } catch (err) {
+      console.error(
+        "Register hotel error:",
+        err.response?.data || err.message
+      );
+      alert(
+        err.response?.data?.message ||
+          "Failed to register hotel. Check console."
+      );
+      setStatus("idle");
+    }
   };
 
-  const isLoading = status === 'loading';
-  const isDone = status === 'done';
-
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4'>
-      <div className='bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden animate-fadeIn'>
-        <div className='flex flex-col md:flex-row'>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden animate-fadeIn">
+        <div className="flex flex-col md:flex-row">
           {/* Image Section */}
-          <div className='md:w-1/2 relative overflow-hidden'>
+          <div className="md:w-1/2 relative overflow-hidden">
             <img
               src={assets.regImage}
               alt="Luxury hotel registration"
-              className='w-full h-64 md:h-full object-cover'
+              className="w-full h-64 md:h-full object-cover"
             />
-            <div className='absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent'></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           </div>
 
           {/* Right Section */}
-          <div className='md:w-1/2 p-8 md:p-12 relative'>
+          <div className="md:w-1/2 p-8 md:p-12 relative">
             {/* Close */}
             <button
               onClick={onClose}
-              className='absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors'
+              className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors"
               aria-label="Close modal"
             >
-              <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-5 h-5 text-gray-400 hover:text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
 
             {/* Header (hidden on success) */}
             {!isDone && (
-              <div className='mb-8'>
-                <h2 className='font-playfair text-3xl md:text-4xl font-bold text-gray-900 mb-3'>
+              <div className="mb-8">
+                <h2 className="font-playfair text-3xl md:text-4xl font-bold text-gray-900 mb-3">
                   Register Your Hotel
                 </h2>
-                <p className='text-gray-600 text-base leading-relaxed'>
-                  Join the StayMori Collection and showcase your property to luxury travelers worldwide.
+                <p className="text-gray-600 text-base leading-relaxed">
+                  Join the StayMori Collection and showcase your property to
+                  luxury travelers worldwide.
                 </p>
               </div>
             )}
@@ -61,13 +98,26 @@ const HotelReg = ({ onClose }) => {
             {isDone && (
               <div className="flex flex-col items-center justify-center text-center pt-6 pb-4">
                 <div className="mb-4 flex items-center justify-center w-14 h-14 rounded-full bg-green-100">
-                  <svg className="w-7 h-7 text-green-600" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 7L9 18l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg
+                    className="w-7 h-7 text-green-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <path
+                      d="M20 7L9 18l-5-5"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-semibold text-gray-900">Thank you!</h3>
+                <h3 className="text-2xl font-semibold text-gray-900">
+                  Thank you!
+                </h3>
                 <p className="mt-2 text-gray-600 max-w-sm">
-                  Your registration was submitted successfully. We’ll review your property and be in touch shortly.
+                  Your registration was submitted successfully. We’ll review
+                  your property and be in touch shortly.
                 </p>
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                   <button
@@ -77,7 +127,13 @@ const HotelReg = ({ onClose }) => {
                     Close
                   </button>
                   <button
-                    onClick={() => setStatus('idle')}
+                    onClick={() => {
+                      setStatus("idle");
+                      setName("");
+                      setContact("");
+                      setAddress("");
+                      setCity("");
+                    }}
                     className="w-full border border-gray-300 hover:bg-gray-50 text-gray-800 font-semibold py-3.5 px-6 rounded-xl transition-all"
                   >
                     Submit Another
@@ -105,80 +161,103 @@ const HotelReg = ({ onClose }) => {
                   <div className="h-12 bg-gray-200 rounded-xl animate-pulse" />
                 </div>
 
-                <p className="text-center text-sm text-gray-500 mt-4">Submitting…</p>
+                <p className="text-center text-sm text-gray-500 mt-4">
+                  Submitting…
+                </p>
               </div>
             )}
 
             {/* FORM (hidden while loading or done) */}
-            {status === 'idle' && (
-              <form className='space-y-6' onSubmit={handleSubmit}>
+            {status === "idle" && (
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 {/* Hotel Name */}
                 <div>
-                  <label htmlFor="name" className='block text-sm font-semibold text-gray-700 mb-2'>
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-semibold text-gray-700 mb-2"
+                  >
                     Hotel Name *
                   </label>
                   <input
-                    id='name'
+                    id="name"
                     type="text"
-                    placeholder='Enter your hotel name'
-                    className='w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-light text-gray-900 placeholder-gray-400'
+                    placeholder="Enter your hotel name"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-light text-gray-900 placeholder-gray-400"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     required
                   />
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label htmlFor="contact" className='block text-sm font-semibold text-gray-700 mb-2'>
+                  <label
+                    htmlFor="contact"
+                    className="block text-sm font-semibold text-gray-700 mb-2"
+                  >
                     Phone Number *
                   </label>
                   <input
-                    id='contact'
+                    id="contact"
                     type="tel"
-                    placeholder='Enter phone number'
-                    className='w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-light text-gray-900 placeholder-gray-400'
+                    placeholder="Enter phone number"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-light text-gray-900 placeholder-gray-400"
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
                     required
                   />
                 </div>
 
                 {/* Address */}
                 <div>
-                  <label htmlFor="address" className='block text-sm font-semibold text-gray-700 mb-2'>
+                  <label
+                    htmlFor="address"
+                    className="block text-sm font-semibold text-gray-700 mb-2"
+                  >
                     Full Address *
                   </label>
                   <input
-                    id='address'
+                    id="address"
                     type="text"
-                    placeholder='Enter complete address'
-                    className='w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-light text-gray-900 placeholder-gray-400'
+                    placeholder="Enter complete address"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-light text-gray-900 placeholder-gray-400"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
                     required
                   />
                 </div>
 
                 {/* City */}
-                  <div>
-                    <label htmlFor="city" className='block text-sm font-semibold text-gray-700 mb-2'>
-                      City
-                    </label>
-                    <input
-                      id='City'
-                      type="text"
-                      placeholder='Enter your city'
-                      className='w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-light text-gray-900 placeholder-gray-400'
-                      required
-                    />
-                  </div>
+                <div>
+                  <label
+                    htmlFor="city"
+                    className="block text-sm font-semibold text-gray-700 mb-2"
+                  >
+                    City *
+                  </label>
+                  <input
+                    id="city"
+                    type="text"
+                    placeholder="Enter your city"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-light text-gray-900 placeholder-gray-400"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    required
+                  />
+                </div>
 
                 {/* Submit */}
-                <div className='pt-4'>
+                <div className="pt-4">
                   <button
-                    type='submit'
-                    className='w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] focus:ring-2 focus:ring-gray-900 focus:ring-opacity-50'
+                    type="submit"
+                    className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] focus:ring-2 focus:ring-gray-900 focus:ring-opacity-50"
                   >
                     Register Hotel
                   </button>
 
-                  <p className='text-xs text-gray-500 mt-3 text-center leading-relaxed'>
-                    By registering, you agree to our Terms of Service and Privacy Policy.
+                  <p className="text-xs text-gray-500 mt-3 text-center leading-relaxed">
+                    By registering, you agree to our Terms of Service and Privacy
+                    Policy.
                   </p>
                 </div>
               </form>
@@ -187,7 +266,8 @@ const HotelReg = ({ onClose }) => {
         </div>
       </div>
 
-      <style jsx>{`
+      {/* simple keyframe for the modal */}
+      <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: scale(0.95); }
           to { opacity: 1; transform: scale(1); }
@@ -199,4 +279,3 @@ const HotelReg = ({ onClose }) => {
 };
 
 export default HotelReg;
-

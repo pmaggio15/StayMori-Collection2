@@ -3,13 +3,28 @@ const { Schema } = mongoose;
 
 const bookingSchema = new Schema(
   {
-    user: { type: String, ref: "User", required: true },
-    room: { type: String, ref: "Room", required: true },
-    hotel: { type: String, ref: "Hotel", required: true },
+    // 🔥 RELATIONSHIPS
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    room: {
+      type: Schema.Types.ObjectId,
+      ref: "Room",
+      required: true,
+    },
+    hotel: {
+      type: Schema.Types.ObjectId,
+      ref: "Hotel",
+      required: true,
+    },
+
     checkInDate: { type: Date, required: true },
     checkOutDate: { type: Date, required: true },
     totalPrice: { type: Number, required: true },
     guests: { type: Number, required: true },
+
     status: {
       type: String,
       enum: ["pending", "confirmed", "cancelled"],
@@ -26,5 +41,4 @@ const bookingSchema = new Schema(
 );
 
 const Booking = mongoose.model("Booking", bookingSchema);
-
 export default Booking;

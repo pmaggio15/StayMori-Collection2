@@ -1,11 +1,14 @@
+
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { facilityIcons, roomCommonData } from '../assets/assets'
 import StarRating from '../components/StarRating'
 import { assets } from '../assets/assets'
+import { useUser } from '@clerk/clerk-react'
 
 const RoomDetails = () => {
     const { id } = useParams()
+    const { user, isSignedIn } = useUser()
     const [room, setRoom] = useState(null)
     const [mainImage, setMainImage] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -18,8 +21,8 @@ const RoomDetails = () => {
         guests: 1
     })
 
-    // API Base URL (same as your other components)
-    const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
+    // API Base URL - updated to use your backend
+    const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
     useEffect(() => {
         fetchRoomDetails()
@@ -30,65 +33,23 @@ const RoomDetails = () => {
             setLoading(true)
             setError(null)
             
-            // Try multiple city codes to find the hotel
-            const cityCodes = ['NYC', 'DXB', 'SIN', 'LON', 'PAR']
-            let foundHotel = null
+            const response = await fetch(`${API_BASE}/api/rooms/${id}`)
             
-            for (const cityCode of cityCodes) {
-                try {
-                    const url = new URL("/api/amadeus/hotels", API_BASE);
-                    url.searchParams.set("cityCode", cityCode);
-                    
-                    const response = await fetch(url.toString())
-                    
-                    if (response.ok) {
-                        const data = await response.json()
-                        
-                        // Find hotel that matches the ID
-                        foundHotel = data.data?.find(hotel => hotel.hotel.hotelId === id)
-                        
-                        if (foundHotel) {
-                            break // Found the hotel, stop searching
-                        }
-                    }
-                } catch (err) {
-                    console.log(`Failed to search in ${cityCode}:`, err)
-                    continue // Try next city
-                }
+            if (!response.ok) {
+                throw new Error('Room not found')
             }
             
-            if (foundHotel) {
-                // Transform the API data to match your component structure
-                const roomData = {
-                    _id: foundHotel.hotel.hotelId,
-                    hotel: {
-                        name: foundHotel.hotel.name,
-                        address: foundHotel.hotel.address?.cityName || 'Address not available',
-                        owner: {
-                            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
-                        }
-                    },
-                    roomType: foundHotel.offers?.[0]?.room?.typeEstimated?.category || 'Luxury Suite',
-                    pricePerNight: foundHotel.offers?.[0]?.price?.total || foundHotel.offers?.[0]?.price?.base || 200,
-                    amenities: ['Free WiFi', 'Room Service', 'Pool Access', 'Mountain View', 'Free Breakfast'],
-                    images: foundHotel.images || [
-                        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
-                        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
-                        'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop',
-                        'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop'
-                    ],
-                    isAvailable: true,
-                    currency: foundHotel.offers?.[0]?.price?.currency || 'USD'
-                }
-                
-                setRoom(roomData)
-                setMainImage(roomData.images[0])
+            const data = await response.json()
+            
+            if (data.success && data.room) {
+                setRoom(data.room)
+                setMainImage(data.room.images[0])
             } else {
-                setError('Hotel not found')
+                setError('Room not found')
             }
         } catch (error) {
             console.error('Failed to fetch room details:', error)
-            setError('Failed to load hotel details')
+            setError('Failed to load room details')
         } finally {
             setLoading(false)
         }
@@ -118,6 +79,7 @@ const RoomDetails = () => {
         const checkIn = new Date(formData.checkInDate)
         const checkOut = new Date(formData.checkOutDate)
         const today = new Date()
+        today.setHours(0, 0, 0, 0)
         
         if (checkIn < today) {
             setAvailabilityStatus({
@@ -139,9 +101,23 @@ const RoomDetails = () => {
         setIsChecking(true)
         setAvailabilityStatus(null)
 
-        // Simulate API call delay
-        setTimeout(() => {
-            if (room && room.isAvailable) {
+        try {
+            // Check availability
+            const response = await fetch(`${API_BASE}/api/bookings/check-availability`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    room: id,
+                    checkInDate: formData.checkInDate,
+                    checkOutDate: formData.checkOutDate
+                })
+            })
+
+            const data = await response.json()
+
+            if (data.success && data.isAvailable) {
                 const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24))
                 const totalPrice = nights * room.pricePerNight
 
@@ -162,8 +138,73 @@ const RoomDetails = () => {
                     message: 'Sorry, this room is not available for the selected dates'
                 })
             }
+        } catch (error) {
+            console.error('Error checking availability:', error)
+            setAvailabilityStatus({
+                type: 'error',
+                message: 'Failed to check availability. Please try again.'
+            })
+        } finally {
             setIsChecking(false)
-        }, 1500)
+        }
+    }
+
+    const handleBookNow = async () => {
+        // Check if user is signed in
+        if (!isSignedIn) {
+            setAvailabilityStatus({
+                type: 'error',
+                message: 'Please sign in to book this room'
+            })
+            return
+        }
+
+        try {
+            setIsChecking(true)
+
+            // Get auth token from Clerk
+            const token = await user.getToken()
+
+            const response = await fetch(`${API_BASE}/api/bookings/book`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    room: id,
+                    checkInDate: availabilityStatus.details.checkIn,
+                    checkOutDate: availabilityStatus.details.checkOut,
+                    guests: availabilityStatus.details.guests
+                })
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                setAvailabilityStatus({
+                    type: 'booked',
+                    message: 'Booking confirmed!',
+                    details: {
+                        ...availabilityStatus.details,
+                        bookingId: data.booking._id
+                    }
+                })
+            } else {
+                setAvailabilityStatus({
+                    type: 'error',
+                    message: data.message || 'Failed to create booking'
+                })
+            }
+        } catch (error) {
+            console.error('Error creating booking:', error)
+            setAvailabilityStatus({
+                type: 'error',
+                message: 'Failed to create booking. Please try again.'
+            })
+        } finally {
+            setIsChecking(false)
+        }
     }
 
     // Loading state
@@ -204,20 +245,20 @@ const RoomDetails = () => {
         <div className='py-28 md:py-35 px-4 md:px-16 lg:px-24 xl:px-32'>
             {/*Room Details */}
             <div className='flex flex-col md:flex-row items-start md:items-center gap-2'>
-                <h1 className='text-3xl md:text-4xl font-playfair'>{room.hotel.name} <span className='font-inter text-sm'>({room.roomType})</span></h1>
-                <p className='text-xs font-inter py-1.5 px-3 text-white bg-gray-700 rounded-full'>20% OFF</p>
+                <h1 className='text-3xl md:text-4xl font-playfair'>{room.hotel} <span className='font-inter text-sm'>({room.roomType})</span></h1>
+                <p className='text-xs font-inter py-1.5 px-3 text-white bg-gray-700 rounded-full'>Premium Room</p>
             </div>
 
             {/*Room Rating*/}
             <div className='flex items-center gap-1 mt-2'>
                 <StarRating />
-                <p className='ml-2'>200+ Reviews</p>
+                <p className='ml-2'>4.8 · 200+ Reviews</p>
             </div>
 
             {/*Room address*/}
             <div className='flex items-center gap-1 text-gray-500 mt-2'>
                 <img src={assets.locationIcon} alt="location-icon" />
-                <span>{room.hotel.address}</span>
+                <span>{room.hotel}</span>
             </div>
 
             {/*Room images */}
@@ -259,7 +300,7 @@ const RoomDetails = () => {
                 </div>
                 {/*Room Price*/}
                 <div className="text-right">
-                    <p className='text-2xl font-medium'>${room.pricePerNight} <span className="text-lg font-normal">/{room.currency === 'USD' ? 'night' : `night (${room.currency})`}</span></p>
+                    <p className='text-2xl font-medium'>${room.pricePerNight} <span className="text-lg font-normal">/night</span></p>
                 </div>
             </div>
 
@@ -330,21 +371,21 @@ const RoomDetails = () => {
             {/* Availability Status */}
             {availabilityStatus && (
                 <div className={`mt-6 p-4 rounded-xl border max-w-6xl mx-auto ${
-                    availabilityStatus.type === 'available' 
+                    availabilityStatus.type === 'available' || availabilityStatus.type === 'booked'
                         ? 'bg-green-50 border-green-200' 
                         : availabilityStatus.type === 'error'
                         ? 'bg-red-50 border-red-200'
                         : 'bg-yellow-50 border-yellow-200'
                 }`}>
                     <div className={`flex items-start gap-3 ${
-                        availabilityStatus.type === 'available' ? 'text-green-800' : 
+                        availabilityStatus.type === 'available' || availabilityStatus.type === 'booked' ? 'text-green-800' : 
                         availabilityStatus.type === 'error' ? 'text-red-800' : 'text-yellow-800'
                     }`}>
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                            availabilityStatus.type === 'available' ? 'bg-green-200' : 
+                            availabilityStatus.type === 'available' || availabilityStatus.type === 'booked' ? 'bg-green-200' : 
                             availabilityStatus.type === 'error' ? 'bg-red-200' : 'bg-yellow-200'
                         }`}>
-                            {availabilityStatus.type === 'available' ? '✓' : 
+                            {availabilityStatus.type === 'available' || availabilityStatus.type === 'booked' ? '✓' : 
                              availabilityStatus.type === 'error' ? '!' : '⚠'}
                         </div>
                         <div className='flex-1'>
@@ -355,11 +396,32 @@ const RoomDetails = () => {
                                     <p><strong>Dates:</strong> {availabilityStatus.details.checkIn} to {availabilityStatus.details.checkOut}</p>
                                     <p><strong>Guests:</strong> {availabilityStatus.details.guests}</p>
                                     <p className='text-lg font-semibold mt-2'>
-                                        <strong>Total Price: ${availabilityStatus.details.totalPrice}</strong>
+                                        <strong>Total Price: ${availabilityStatus.details.totalPrice.toLocaleString()}</strong>
                                     </p>
-                                    <button className='mt-3 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors cursor-not-allowed'>
-                                        Book Now
-                                    </button>
+                                    {availabilityStatus.type === 'available' && (
+                                        <button 
+                                            onClick={handleBookNow}
+                                            disabled={isChecking}
+                                            className={`mt-3 ${
+                                                isChecking 
+                                                    ? 'bg-gray-400 cursor-not-allowed' 
+                                                    : 'bg-green-600 hover:bg-green-700'
+                                            } text-white px-6 py-2 rounded-lg font-semibold transition-colors`}
+                                        >
+                                            {isChecking ? 'Booking...' : 'Confirm Booking'}
+                                        </button>
+                                    )}
+                                    {availabilityStatus.type === 'booked' && (
+                                        <div className='mt-3'>
+                                            <p className='text-green-700 font-semibold mb-2'>✓ Booking Confirmed!</p>
+                                            <a 
+                                                href="/my-bookings"
+                                                className='inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors'
+                                            >
+                                                View My Bookings
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -381,22 +443,30 @@ const RoomDetails = () => {
             </div>
 
             <div>
-                <p className='max-w-3xl border-y border-gray-300 my-15 py-10 text-gray-500'>Guests will be placed on the ground floor depending on availability. Indulge in a stylish two-bedroom apartment offering true metropolitan charm. The listed rate is for two guests; please select the number of guests during booking to ensure correct group pricing. Accommodations remain subject to ground floor availability. Relax in a refined two-bedroom apartment designed to reflect the spirit and sophistication of modern city living.</p>
+                <p className='max-w-3xl border-y border-gray-300 my-15 py-10 text-gray-500'>
+                    Experience unparalleled luxury in our carefully designed accommodations. Each room features premium amenities and thoughtful touches to ensure your stay is nothing short of exceptional. Our attentive staff is dedicated to making your visit memorable, whether you're here for business or pleasure.
+                </p>
             </div>
 
             {/*Hosted By*/}
             <div className='flex flex-col items-start gap-4'>
                 <div className='flex gap-4'>
-                    <img src={room.hotel.owner.image} alt="Host" className='h-14 w-14 md:h-18 md:w-18 rounded-full object-cover' />
+                    <img 
+                        src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face" 
+                        alt="Host" 
+                        className='h-14 w-14 md:h-18 md:w-18 rounded-full object-cover' 
+                    />
                     <div>
-                        <p className='text-lg md:text-xl'>Hosted by {room.hotel.name}</p>
+                        <p className='text-lg md:text-xl'>Managed by {room.hotel.split(' - ')[0]}</p>
                         <div className='flex items-center mt-1'>
                             <StarRating />
-                            <p className='ml-2'>200+ reviews</p>
+                            <p className='ml-2'>4.8 · 200+ reviews</p>
                         </div>
                     </div>
                 </div>
-                <button className='bg-gray-800 hover:bg-gray-900 active:scale-95 transition-all duration-300 text-white rounded-xl shadow-lg hover:shadow-xl max-md:w-full max-md:mt-6 md:px-8 py-3 md:py-4 text-base font-semibold cursor-not-allowed'>Contact Now</button>
+                <button className='bg-gray-800 hover:bg-gray-900 active:scale-95 transition-all duration-300 text-white rounded-xl shadow-lg hover:shadow-xl max-md:w-full max-md:mt-6 md:px-8 py-3 md:py-4 text-base font-semibold'>
+                    Contact Property
+                </button>
             </div>
         </div>
     )

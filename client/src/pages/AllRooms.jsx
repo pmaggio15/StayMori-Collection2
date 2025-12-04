@@ -1,9 +1,28 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import { assets, facilityIcons } from '../assets/assets'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import StarRating from '../components/StarRating';
+import { assets } from '../assets/assets'
+import StarRating from '../components/StarRating'
 
-// Custom checkbox component that works
+// Facility icons mapping
+const facilityIcons = {
+    'Free WiFi': assets.wifiIcon,
+    'Room Service': assets.roomServiceIcon,
+    'Pool Access': assets.poolIcon,
+    'Mountain View': assets.mountainIcon,
+    'Free Breakfast': assets.breakfastIcon,
+    'Butler Service': assets.roomServiceIcon,
+    'Minibar': assets.minibarIcon,
+    'City View': assets.cityViewIcon,
+    'Marble Bathroom': assets.bathroomIcon,
+    'Premium Bedding': assets.bedIcon,
+    'Beach Access': assets.beachIcon,
+    'Ocean View': assets.oceanViewIcon,
+    'Fitness Center': assets.gymIcon,
+    'Garden View': assets.gardenIcon,
+    'Fireplace': assets.fireplaceIcon,
+};
+
+// Custom checkbox component
 const CheckBox = ({label, selected = false, onChange = () => {}}) => {
     return (
         <div className='flex items-center gap-2 mb-2 p-1 hover:bg-gray-50 rounded cursor-pointer'
@@ -22,7 +41,7 @@ const CheckBox = ({label, selected = false, onChange = () => {}}) => {
     )
 }
 
-// Custom radio button component that works
+// Custom radio button component
 const RadioButton = ({label, selected = false, onChange = () => {}}) => {
     return (
         <div className='flex items-center gap-2 mb-2 p-1 hover:bg-gray-50 rounded cursor-pointer'
@@ -41,24 +60,24 @@ const AllRooms = () => {
     const navigate = useNavigate();
     const [openFilters, setOpenFilters] = useState(false)
 
-    // API Base URL (same as your other components)
-    const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
+    // API Base URL - updated to use your backend
+    const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
-    // Filter options
+    // Filter options - updated to match your seeded data
     const roomTypes = [
-        "Luxury Suite",
         "Standard",
-        "Premium",
-        "Deluxe"
+        "Deluxe",
+        "Suite",
+        "Premium Suite",
+        "Executive Suite"
     ];
 
     const priceRanges = [
-        "0-200",
-        "200-300", 
-        "300-400",
-        "400-500",
-        "500-600",
-        "600+"
+        "0-500",
+        "500-800", 
+        "800-1000",
+        "1000-1500",
+        "1500+"
     ];
 
     const sortOptions = [
@@ -79,73 +98,29 @@ const AllRooms = () => {
         fetchAllRooms();
     }, []);
 
-    // Helper to normalize hotel data from Amadeus API
-    const normalizeHotels = (arr = []) => {
-        return arr.map((item) => {
-            const hotel = item?.hotel || {};
-            const offer = item?.offers?.[0] || {};
-            const price = offer?.price?.total ?? Math.floor(Math.random() * 500) + 200;
-            const currency = offer?.price?.currency ?? "USD";
-            const images = item?.images || [
-                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&h=300&fit=crop"
-            ];
-
-            return {
-                _id: hotel.hotelId || hotel.name || crypto.randomUUID?.() || Math.random().toString(36).slice(2),
-                hotel: {
-                    name: hotel.name || "Hotel",
-                    city: hotel.address?.cityName || "Featured Location",
-                    address: hotel.address?.cityName || "Featured Location",
-                },
-                roomType: ["Luxury Suite", "Standard", "Premium", "Deluxe"][Math.floor(Math.random() * 4)],
-                pricePerNight: price,
-                amenities: ["Free WiFi", "Room Service", "Pool Access", "Mountain View", "Free Breakfast"].slice(0, 3),
-                images: images,
-                isAvailable: true,
-                createdAt: new Date().toISOString(),
-                currency
-            };
-        });
-    };
-
+    // Fetch rooms from your MongoDB API
     const fetchAllRooms = async () => {
         try {
             setLoading(true);
             setError(null);
             
-            // Fetch from multiple cities to get more hotels
-            const cityCodes = ['NYC', 'DXB', 'SIN', 'LON'];
-            let allHotels = [];
+            const response = await fetch(`${API_BASE}/api/rooms`);
             
-            for (const cityCode of cityCodes) {
-                try {
-                    const url = new URL("/api/amadeus/hotels", API_BASE);
-                    url.searchParams.set("cityCode", cityCode);
-                    
-                    const response = await fetch(url.toString());
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.data && Array.isArray(data.data)) {
-                            allHotels = [...allHotels, ...data.data];
-                        }
-                    }
-                } catch (err) {
-                    console.log(`Failed to fetch from ${cityCode}:`, err);
-                    continue;
-                }
+            if (!response.ok) {
+                throw new Error('Failed to fetch rooms');
             }
             
-            if (allHotels.length > 0) {
-                const normalizedRooms = normalizeHotels(allHotels);
-                setRoomsData(normalizedRooms);
+            const data = await response.json();
+            
+            if (data.success && data.rooms) {
+                setRoomsData(data.rooms);
             } else {
-                setError('No hotels found');
+                setError('No rooms found');
             }
             
         } catch (error) {
             console.error('Failed to fetch rooms:', error);
-            setError('Failed to load hotels');
+            setError('Failed to load rooms. Please try again.');
             setRoomsData([]);
         } finally {
             setLoading(false);
@@ -177,7 +152,7 @@ const AllRooms = () => {
 
     // Helper to parse price ranges
     const rangeToTuple = (r) => {
-        if (r === "600+") return { min: 600, max: Infinity };
+        if (r === "1500+") return { min: 1500, max: Infinity };
         const [min, max] = r.split("-").map(n => Number(n.trim()));
         return { min, max };
     };
@@ -210,8 +185,7 @@ const AllRooms = () => {
             list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
 
-        // Limit to maximum 6 hotels
-        return list.slice(0, 6);
+        return list;
     }, [roomsData, selectedTypes, selectedRanges, sortOption]);
 
     // Loading state
@@ -265,7 +239,7 @@ const AllRooms = () => {
                 <div className='flex flex-col items-start text-left mb-6'>
                     <h1 className='font-playfair text-4xl md:text-[40px]'>Hotel Rooms</h1>
                     <p className='text-sm md:text-base text-gray-500/90 mt-2 max-w-174'>
-                        Unlock special offers and limited-time packages that enhance every moment of your journey with unforgettable experiences.
+                        Discover our curated collection of luxury accommodations across major cities.
                     </p>
                     
                     {/* Active filters display */}
@@ -306,24 +280,20 @@ const AllRooms = () => {
                                 className='max-h-65 md:w-1/2 rounded-xl shadow-lg object-cover cursor-pointer hover:scale-105 transition-transform' 
                             />
                             <div className='md:w-1/2 flex flex-col gap-2'>
-                                <p className='text-gray-500'>{room.hotel.city}</p>
+                                <p className='text-gray-500'>{room.hotel}</p>
                                 <p 
                                     onClick={() => {navigate(`/rooms/${room._id}`); scrollTo(0,0)}}
                                     className='text-gray-800 text-3xl font-playfair cursor-pointer hover:text-gray-600'>
-                                    {room.hotel.name}
+                                    {room.hotel}
                                 </p>
                                 <div className='flex items-center'>
                                     <StarRating />
-                                    <p className='ml-2'>200+ reviews</p>
-                                </div>
-                                <div className='flex items-center gap-1 text-gray-500 mt-2 text-sm'>
-                                    <img src={assets.locationIcon} alt="location-icon" />
-                                    <span>{room.hotel.address}</span>
+                                    <p className='ml-2'>4.8 · 200+ reviews</p>
                                 </div>
                                 
                                 {/* Room Amenities */}
                                 <div className='flex flex-wrap items-center mt-3 mb-6 gap-4'>
-                                   {room.amenities.map((item, index)=> (
+                                   {room.amenities.slice(0, 4).map((item, index)=> (
                                     <div key={index} className='flex items-center gap-3 px-3 py-2 rounded-lg bg-[#F5F5FF]/70'>
                                         {facilityIcons[item] ? (
                                             <img src={facilityIcons[item]} alt={item} className='w-5 h-5'/>
@@ -335,10 +305,10 @@ const AllRooms = () => {
                                    ))} 
                                 </div>
                                 
-                                {/* Room price for night */}
+                                {/* Room price and type */}
                                 <div className='flex justify-between items-center'>
-                                    <p className='text-xl font-medium text-gray-700'>${room.pricePerNight} /night</p>
-                                    <span className='text-sm text-gray-500'>{room.roomType}</span>
+                                    <p className='text-xl font-medium text-gray-700'>${room.pricePerNight} <span className='text-sm font-normal'>/night</span></p>
+                                    <span className='text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full'>{room.roomType}</span>
                                 </div>
                             </div>
                         </div>
@@ -347,7 +317,7 @@ const AllRooms = () => {
             </div>
 
             {/* Right side - Filters */}
-            <div className='bg-white w-full lg:w-80 border border-gray-300 text-gray-600 max-lg:mb-8 lg:mt-16 rounded-lg overflow-hidden'>
+            <div className='bg-white w-full lg:w-80 border border-gray-300 text-gray-600 max-lg:mb-8 lg:mt-16 rounded-lg overflow-hidden shadow-sm'>
                 <div className={`flex items-center justify-between px-5 py-2.5 border-b border-gray-300`}>
                     <p className='text-base font-medium text-gray-800'>FILTERS</p>
                     <div className='text-xs cursor-pointer'>
@@ -415,4 +385,3 @@ const AllRooms = () => {
 }
 
 export default AllRooms
-
