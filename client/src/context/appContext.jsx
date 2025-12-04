@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast'
 import { useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE;
+axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
 const appContext = createContext();
 
@@ -46,18 +46,18 @@ export const AppProvider = ({ children }) => {
     }
 
     const fetchRooms = async () => {
-        try {
-            const { data } = await axios.get('/api/rooms')
-            if (data.success) {
-                setRooms(data.rooms)
-            }
-            else {
-                toast.error(data.message)
-            }
-        } catch (error) {
-            toast.error(error.message)
+    try {
+        const { data } = await axios.get("/api/rooms");
+
+        if (data.success) {
+        setRooms(data.rooms);
+        } else {
+        toast.error(data.message);
         }
+    } catch (error) {
+        toast.error(error.message);
     }
+    };
 
     useEffect(() => {
         if (user) {
