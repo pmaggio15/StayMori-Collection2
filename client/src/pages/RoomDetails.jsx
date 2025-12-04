@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { facilityIcons, roomCommonData } from '../assets/assets'
@@ -245,7 +244,7 @@ const RoomDetails = () => {
         <div className='py-28 md:py-35 px-4 md:px-16 lg:px-24 xl:px-32'>
             {/*Room Details */}
             <div className='flex flex-col md:flex-row items-start md:items-center gap-2'>
-                <h1 className='text-3xl md:text-4xl font-playfair'>{room.hotel} <span className='font-inter text-sm'>({room.roomType})</span></h1>
+                <h1 className='text-3xl md:text-4xl font-playfair'>{room.hotel?.name || 'Luxury Hotel'} <span className='font-inter text-sm'>({room.roomType})</span></h1>
                 <p className='text-xs font-inter py-1.5 px-3 text-white bg-gray-700 rounded-full'>Premium Room</p>
             </div>
 
@@ -258,7 +257,7 @@ const RoomDetails = () => {
             {/*Room address*/}
             <div className='flex items-center gap-1 text-gray-500 mt-2'>
                 <img src={assets.locationIcon} alt="location-icon" />
-                <span>{room.hotel}</span>
+                <span>{room.hotel?.address || room.hotel?.name || 'Featured Location'}</span>
             </div>
 
             {/*Room images */}
@@ -452,12 +451,12 @@ const RoomDetails = () => {
             <div className='flex flex-col items-start gap-4'>
                 <div className='flex gap-4'>
                     <img 
-                        src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face" 
+                        src={room.hotel?.image || "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face"} 
                         alt="Host" 
                         className='h-14 w-14 md:h-18 md:w-18 rounded-full object-cover' 
                     />
                     <div>
-                        <p className='text-lg md:text-xl'>Managed by {room.hotel.split(' - ')[0]}</p>
+                        <p className='text-lg md:text-xl'>Managed by {room.hotel?.name || 'Hotel Management'}</p>
                         <div className='flex items-center mt-1'>
                             <StarRating />
                             <p className='ml-2'>4.8 · 200+ reviews</p>

@@ -16,19 +16,23 @@ import {
 
 const roomRouter = express.Router();
 
-// Public routes (no authentication needed)
-roomRouter.post("/", protect, createRoom);
-roomRouter.get("/", getRooms);                          
-roomRouter.get("/featured", getFeaturedRooms);          
-roomRouter.get("/cities", getAllCities);                
-roomRouter.get("/search", searchRooms);                 
-roomRouter.get("/price-range", getRoomsByPriceRange);   
-roomRouter.get("/city/:cityName", getRoomsByCity);      
-roomRouter.get("/:id", getRoomById);                    
+roomRouter.post(
+  "/",
+  protect,
+  upload.array("images", 5),
+  createRoom
+);
 
-// Protected routes (require authentication)
-roomRouter.post("/", upload.array("images", 5), protect, createRoom);
-roomRouter.get("/owner/rooms", protect, getOwnerRooms);
+
+roomRouter.get("/", getRooms);                         
+roomRouter.get("/featured", getFeaturedRooms);          
+roomRouter.get("/cities", getAllCities);               
+roomRouter.get("/search", searchRooms);                 
+roomRouter.get("/price-range", getRoomsByPriceRange);  
+roomRouter.get("/city/:cityName", getRoomsByCity);     
+roomRouter.get("/:id", getRoomById);                  
+
+roomRouter.get("/owner", protect, getOwnerRooms);       
 roomRouter.post("/toggle-availability", protect, toggleRoomAvailability);
 
 export default roomRouter;

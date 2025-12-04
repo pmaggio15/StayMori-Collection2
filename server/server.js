@@ -1,4 +1,3 @@
-// server/server.js
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
@@ -32,13 +31,12 @@ app.use(
 app.use(express.json());
 app.use(clerkMiddleware());
 
-// Clerk webhooks
 app.use("/api/clerk", clerkWebhooks);
 
-// Health route
+
 app.get("/", (req, res) => res.send("API is working"));
 
-// API routes
+
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);

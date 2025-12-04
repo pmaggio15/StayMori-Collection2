@@ -280,11 +280,11 @@ const AllRooms = () => {
                                 className='max-h-65 md:w-1/2 rounded-xl shadow-lg object-cover cursor-pointer hover:scale-105 transition-transform' 
                             />
                             <div className='md:w-1/2 flex flex-col gap-2'>
-                                <p className='text-gray-500'>{room.hotel}</p>
+                                <p className='text-gray-500'>{room.hotel?.city || 'Featured Location'}</p>
                                 <p 
                                     onClick={() => {navigate(`/rooms/${room._id}`); scrollTo(0,0)}}
                                     className='text-gray-800 text-3xl font-playfair cursor-pointer hover:text-gray-600'>
-                                    {room.hotel}
+                                    {room.hotel?.name || 'Luxury Hotel'}
                                 </p>
                                 <div className='flex items-center'>
                                     <StarRating />
