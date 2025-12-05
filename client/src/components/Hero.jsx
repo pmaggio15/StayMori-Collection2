@@ -88,6 +88,7 @@ const Hero = () => {
                 onChange={handleInputChange}
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 placeholder="Where to?"
+                required
               />
               <datalist id="destinations">
                 {cities.map((city, index) => (
@@ -112,6 +113,7 @@ const Hero = () => {
                 onChange={handleInputChange}
                 min={new Date().toISOString().split('T')[0]}
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                required
               />
             </div>
 
