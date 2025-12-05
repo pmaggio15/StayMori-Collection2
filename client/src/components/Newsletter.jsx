@@ -5,15 +5,35 @@ import Title from './Title.jsx';
 const Newsletter = () => {
   const [status, setStatus] = useState('idle'); 
   const [email, setEmail] = useState('');
+  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
     setStatus('loading');
 
-    setTimeout(() => {
-      setStatus('done');
-    }, 1200);
+    try {
+      const response = await fetch(`${API_BASE}/api/newsletter/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setStatus('done');
+      } else {
+        alert(data.message || 'Subscription failed');
+        setStatus('idle');
+      }
+    } catch (error) {
+      console.error('Newsletter subscription error:', error);
+      alert('Failed to subscribe. Please try again.');
+      setStatus('idle');
+    }
   };
 
   const resetForm = () => {
@@ -91,7 +111,7 @@ const Newsletter = () => {
           </div>
           <h3 className="text-2xl font-semibold">Thank you!</h3>
           <p className="mt-2 text-gray-300">
-            You’re on the list. Look out for insider perks and exclusive offers in your inbox.
+            You're on the list. Check your email for a confirmation message!
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <button
@@ -118,11 +138,3 @@ const Newsletter = () => {
 };
 
 export default Newsletter;
-
-
-
-
-
-
-
-

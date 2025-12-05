@@ -13,6 +13,7 @@ import hotelRouter from "./routes/hotelRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 import amadeusRouter from "./routes/amadeusRoutes.js";
+import newsletterRouter from "./routes/newsletterRoutes.js";
 
 const app = express();
 
@@ -32,7 +33,7 @@ app.use(express.json());
 app.use(clerkMiddleware());
 
 app.use("/api/clerk", clerkWebhooks);
-
+app.use("/api/newsletter", newsletterRouter);
 
 app.get("/", (req, res) => res.send("API is working"));
 
