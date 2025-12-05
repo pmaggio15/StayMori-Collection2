@@ -37,7 +37,7 @@ const ExclusiveOffers = () => {
           </button>
           
           {/* Shimmer Effect on Hover */}
-          <div className='absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500'>
+          <div className='absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 cursor-not-allowed'>
             <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 translate-x-full group-hover:-translate-x-full transition-transform duration-1000 ease-in-out'></div>
           </div>
         </div>

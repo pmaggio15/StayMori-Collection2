@@ -60,20 +60,35 @@ export const getRoomById = async (req, res) => {
   }
 };
 
-// API to get rooms by city (extracts city from hotel name)
+// API to get rooms by city (searches hotel.city field)
 // GET /api/rooms/city/:cityName
 export const getRoomsByCity = async (req, res) => {
   try {
     const { cityName } = req.params;
     
-    // Find rooms where hotel name contains the city name (case-insensitive)
+    // First, find hotels that match the city
+    const hotels = await Hotel.find({
+      city: { $regex: cityName, $options: 'i' }
+    });
+    
+    if (hotels.length === 0) {
+      return res.json({ success: true, rooms: [], count: 0 });
+    }
+    
+    // Get hotel IDs
+    const hotelIds = hotels.map(h => h._id);
+    
+    // Find rooms that belong to these hotels
     const rooms = await Room.find({
-      hotel: { $regex: cityName, $options: 'i' },
+      hotel: { $in: hotelIds },
       isAvailable: true
-    }).sort({ createdAt: -1 });
+    })
+      .populate('hotel')
+      .sort({ createdAt: -1 });
 
     res.json({ success: true, rooms, count: rooms.length });
   } catch (error) {
+    console.error('getRoomsByCity error:', error);
     res.json({ success: false, message: error.message });
   }
 };

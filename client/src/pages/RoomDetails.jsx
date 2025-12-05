@@ -3,11 +3,12 @@ import { useParams } from 'react-router-dom'
 import { facilityIcons, roomCommonData } from '../assets/assets'
 import StarRating from '../components/StarRating'
 import { assets } from '../assets/assets'
-import { useUser } from '@clerk/clerk-react'
+import { useUser, useAuth } from '@clerk/clerk-react'
 
 const RoomDetails = () => {
     const { id } = useParams()
     const { user, isSignedIn } = useUser()
+    const { getToken } = useAuth()
     const [room, setRoom] = useState(null)
     const [mainImage, setMainImage] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -149,8 +150,12 @@ const RoomDetails = () => {
     }
 
     const handleBookNow = async () => {
+        console.log('handleBookNow called')
+        console.log('isSignedIn:', isSignedIn)
+        console.log('user:', user)
+        
         // Check if user is signed in
-        if (!isSignedIn) {
+        if (!isSignedIn || !user) {
             setAvailabilityStatus({
                 type: 'error',
                 message: 'Please sign in to book this room'
@@ -161,9 +166,33 @@ const RoomDetails = () => {
         try {
             setIsChecking(true)
 
-            // Get auth token from Clerk
-            const token = await user.getToken()
+            // Get auth token from Clerk - with detailed error handling
+            let token
+            try {
+                console.log('Attempting to get token...')
+                token = await getToken()
+                console.log('Token received:', token ? 'yes' : 'no')
+            } catch (tokenError) {
+                console.error('Token retrieval error:', tokenError)
+                setAvailabilityStatus({
+                    type: 'error',
+                    message: `Authentication failed: ${tokenError.message}. Please sign in again.`
+                })
+                setIsChecking(false)
+                return
+            }
 
+            if (!token) {
+                console.error('No token received')
+                setAvailabilityStatus({
+                    type: 'error',
+                    message: 'Could not get authentication token. Please sign in again.'
+                })
+                setIsChecking(false)
+                return
+            }
+
+            console.log('Making booking request...')
             const response = await fetch(`${API_BASE}/api/bookings/book`, {
                 method: 'POST',
                 headers: {
@@ -179,6 +208,7 @@ const RoomDetails = () => {
             })
 
             const data = await response.json()
+            console.log('Booking response:', data)
 
             if (data.success) {
                 setAvailabilityStatus({
@@ -199,7 +229,7 @@ const RoomDetails = () => {
             console.error('Error creating booking:', error)
             setAvailabilityStatus({
                 type: 'error',
-                message: 'Failed to create booking. Please try again.'
+                message: error.message || 'Failed to create booking. Please try again.'
             })
         } finally {
             setIsChecking(false)

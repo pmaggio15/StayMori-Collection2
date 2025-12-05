@@ -104,7 +104,7 @@ const Navbar = ({ onOpenHotelReg }) => {
             <div className="hidden lg:flex items-center space-x-4">
                 {/* Search Button */}
                 <button 
-                    className={`p-2.5 rounded-xl transition-all duration-300 hover:scale-105 ${
+                    className={`p-2.5 rounded-xl transition-all cursor-not-allowed duration-300 hover:scale-105 ${
                         isScrolled 
                             ? 'text-gray-600 hover:bg-gray-100 hover:text-gray-800' 
                             : 'text-white hover:bg-white/10 hover:text-white'
@@ -118,7 +118,8 @@ const Navbar = ({ onOpenHotelReg }) => {
 
                 {/* Dashboard Link */}
                 <Link 
-                    className={`cursor-not-allowed px-4 py-2 text-sm font-medium rounded-xl border transition-all duration-300 hover:scale-105 ${
+                    to="/owner"
+                    className={`px-4 py-2 text-sm font-medium rounded-xl border transition-all duration-300 hover:scale-105 ${
                         isScrolled 
                             ? 'border-gray-300 text-gray-700 hover:bg-gray-50' 
                             : 'border-white/30 text-white hover:bg-white/10'
@@ -256,7 +257,7 @@ const Navbar = ({ onOpenHotelReg }) => {
                         {/* Only show Dashboard if user is logged in */}
                         {user && (
                             <Link 
-                                to="/dashboard"
+                                to="/owner"
                                 onClick={() => setIsMenuOpen(false)}
                                 className="flex items-center px-6 py-4 mx-6 mt-4 text-center text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors duration-200"
                             >

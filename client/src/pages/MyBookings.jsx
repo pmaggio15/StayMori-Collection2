@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import Title from '../components/Title'
 import { assets } from '../assets/assets'
-import { useUser } from '@clerk/clerk-react'
+import { useUser, useAuth } from '@clerk/clerk-react'
 
 const MyBookings = () => {
     const { user } = useUser()
+    const { getToken } = useAuth()
     const [bookings, setBookings] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
 
-    const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000"
+    const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000"
 
     useEffect(() => {
         if (user) {
@@ -24,7 +25,7 @@ const MyBookings = () => {
 
             const response = await fetch(`${API_BASE}/api/bookings/user`, {
                 headers: {
-                    'Authorization': `Bearer ${await user.getToken()}`
+                    'Authorization': `Bearer ${await getToken()}`
                 }
             })
 

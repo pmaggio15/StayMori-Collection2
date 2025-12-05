@@ -11,7 +11,7 @@ const SearchResults = () => {
   const urlParams = new URLSearchParams(location.search);
   
   const [searchData, setSearchData] = useState({
-    city: searchParams.city || urlParams.get('city') || 'NYC',
+    cityName: searchParams.cityName || urlParams.get('cityName') || 'New York',
     checkIn: searchParams.checkIn || urlParams.get('checkIn') || null,
     checkOut: searchParams.checkOut || urlParams.get('checkOut') || null,
     guests: parseInt(searchParams.guests || urlParams.get('guests') || '1')
@@ -32,7 +32,7 @@ const SearchResults = () => {
 
       {/* Results Section */}
       <FeaturedDestination
-        searchCity={searchData.city}
+        searchCity={searchData.cityName}
         searchCheckIn={searchData.checkIn}
         searchCheckOut={searchData.checkOut}
         searchGuests={searchData.guests}

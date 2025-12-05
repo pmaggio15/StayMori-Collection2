@@ -5,7 +5,7 @@ const bookingSchema = new Schema(
   {
     // 🔥 RELATIONSHIPS
     user: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: "User",
       required: true,
     },
