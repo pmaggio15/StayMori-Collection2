@@ -1,2 +1,17 @@
-node_modulesserver/.env
+# Dependencies
+node_modules
+server/node_modules
+client/node_modules
+
+# Environment variables
+.env
+server/.env
 client/.env
+.env.local
+
+# Build outputs
+client/dist
+client/build
+
+# OS files
+.DS_Store
