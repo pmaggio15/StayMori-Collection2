@@ -4,8 +4,10 @@ import { facilityIcons, roomCommonData } from '../assets/assets'
 import StarRating from '../components/StarRating'
 import { assets } from '../assets/assets'
 import { useUser, useAuth } from '@clerk/clerk-react'
+import { useNavigate } from 'react-router-dom'
 
 const RoomDetails = () => {
+    const navigate = useNavigate()
     const { id } = useParams()
     const { user, isSignedIn } = useUser()
     const { getToken } = useAuth()
@@ -211,15 +213,8 @@ const RoomDetails = () => {
             console.log('Booking response:', data)
 
             if (data.success) {
-                setAvailabilityStatus({
-                    type: 'booked',
-                    message: 'Booking confirmed!',
-                    details: {
-                        ...availabilityStatus.details,
-                        bookingId: data.booking._id
-                    }
-                })
-            } else {
+            navigate(`/payment/${data.booking._id}`)
+                }else {
                 setAvailabilityStatus({
                     type: 'error',
                     message: data.message || 'Failed to create booking'

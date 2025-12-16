@@ -2,6 +2,7 @@
   "type": "module",
   "dependencies": {
     "dotenv": "^17.2.3",
-    "mongoose": "^8.0.0"
+    "mongoose": "^8.0.0",
+    "stripe": "^20.0.0"
   }
 }

@@ -1,19 +1,17 @@
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
-
 import connectDB from "./configs/db.js";
 import connectCloudinary from "./configs/cloudinary.js";
-
 import { clerkMiddleware } from "@clerk/express";
 import clerkWebhooks from "./controllers/clerkWebHooks.js";
-
 import userRouter from "./routes/userRoutes.js";
 import hotelRouter from "./routes/hotelRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 import amadeusRouter from "./routes/amadeusRoutes.js";
 import newsletterRouter from "./routes/newsletterRoutes.js";
+import paymentRouter from "./routes/paymentRoutes.js";
 
 const app = express();
 
@@ -37,7 +35,7 @@ app.use("/api/newsletter", newsletterRouter);
 
 app.get("/", (req, res) => res.send("API is working"));
 
-
+app.use('/api/payment', paymentRouter);
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);

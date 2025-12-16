@@ -65,6 +65,21 @@ export const createBooking = async (req, res) => {
       return res.json({ success: false, message: "Room not found" });
     }
 
+    console.log('📦 Room data:', {
+      roomId: roomData._id,
+      hotelId: roomData.hotel,
+      hotelType: typeof roomData.hotel
+    });
+
+    // Get hotel data
+    const hotelData = await Hotel.findById(roomData.hotel);
+    
+    console.log('🏨 Hotel data:', hotelData);
+    
+    if (!hotelData) {
+      return res.json({ success: false, message: "Hotel not found" });
+    }
+
     let totalPrice = roomData.pricePerNight;
 
     // Calculate totalPrice based on nights
@@ -75,17 +90,25 @@ export const createBooking = async (req, res) => {
 
     totalPrice *= nights;
 
+    console.log('💰 Booking details:', {
+      hotelName: hotelData.name,
+      totalPrice,
+      nights
+    });
+
     // Create booking
     const booking = await Booking.create({
       user: userId,
       room,
-      hotel: roomData.hotel, // This is the hotel name string from your seeded data
+      hotel: hotelData.name,
       guests: +guests,
       checkInDate,
       checkOutDate,
       totalPrice,
-      status: "confirmed"
+      status: "pending"
     });
+
+    console.log('✅ Booking created:', booking._id);
 
     res.json({ 
       success: true, 
@@ -100,7 +123,9 @@ export const createBooking = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
+    console.log('❌ BOOKING ERROR:', error);
+    console.log('Error message:', error.message);
+    console.log('Error stack:', error.stack);
     res.json({ success: false, message: "Failed to create booking" });
   }
 };
@@ -119,22 +144,33 @@ export const getUserBookings = async (req, res) => {
       .populate("room")
       .sort({ createdAt: -1 });
 
-    // Transform bookings to include hotel info from room
-    const transformedBookings = bookings.map(booking => ({
-      _id: booking._id,
-      room: booking.room,
-      hotel: {
-        name: booking.hotel,
-        address: booking.hotel
-      },
-      checkInDate: booking.checkInDate,
-      checkOutDate: booking.checkOutDate,
-      totalPrice: booking.totalPrice,
-      guests: booking.guests,
-      status: booking.status,
-      isPaid: booking.isPaid,
-      createdAt: booking.createdAt
-    }));
+    // Transform bookings to ensure hotel is always a string
+    const transformedBookings = bookings.map(booking => {
+      // Handle both string and ObjectId hotel fields
+      let hotelName = 'Unknown Hotel';
+      
+      if (typeof booking.hotel === 'string') {
+        hotelName = booking.hotel;
+      } else if (booking.hotel && booking.hotel.name) {
+        hotelName = booking.hotel.name;
+      } else if (booking.hotel && booking.hotel._id) {
+        // Old booking with ObjectId - just use a placeholder
+        hotelName = 'Legacy Booking';
+      }
+
+      return {
+        _id: booking._id,
+        room: booking.room,
+        hotel: hotelName, // ALWAYS a string now
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate,
+        totalPrice: booking.totalPrice,
+        guests: booking.guests,
+        status: booking.status,
+        isPaid: booking.isPaid,
+        createdAt: booking.createdAt
+      };
+    });
 
     res.json({ success: true, bookings: transformedBookings });
   } catch (error) {

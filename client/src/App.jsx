@@ -16,6 +16,7 @@ import Hero from './components/Hero';
 import { useState } from 'react';
 import Experience from './pages/Experience';
 import { Toaster } from 'react-hot-toast';
+import Payment from './pages/Payment';
 
 const App = () => {
   const isOwnerPath = useLocation().pathname.includes("owner");
@@ -45,6 +46,7 @@ const App = () => {
           <Route path='/rooms' element={<AllRooms />} />
           <Route path='/rooms/:id' element={<RoomDetails />} />
           <Route path='/my-bookings' element={<MyBookings />} />  
+          <Route path='/payment/:bookingId' element={<Payment />} />
           <Route path='/owner' element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="add-room" element={<AddRoom />} />

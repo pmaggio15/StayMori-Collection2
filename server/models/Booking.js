@@ -15,7 +15,7 @@ const bookingSchema = new Schema(
       required: true,
     },
     hotel: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: "Hotel",
       required: true,
     },
@@ -36,6 +36,7 @@ const bookingSchema = new Schema(
       default: "Pay At Hotel",
     },
     isPaid: { type: Boolean, default: false },
+    paymentIntentId: { type: String }
   },
   { timestamps: true }
 );

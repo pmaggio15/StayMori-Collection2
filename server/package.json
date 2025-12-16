@@ -20,6 +20,7 @@
     "mongoose": "^8.18.0",
     "multer": "^2.0.2",
     "resend": "^6.5.2",
+    "stripe": "^20.0.0",
     "svix": "^1.76.1"
   },
   "devDependencies": {
