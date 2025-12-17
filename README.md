@@ -1,82 +1,53 @@
-# StayMori — Full-Stack Booking Platform
+# StayMori — Full Stack Vacation Booking Platform
 
-StayMori is a full-stack vacation rental booking platform designed to handle real-time availability, dynamic pricing, and secure transactional workflows.
+A production grade vacation rental booking platform with real time availability, secure authentication, and end to end booking workflows.
 
-The system mirrors real-world booking platforms with authenticated users, database-driven availability, and production-ready architecture.
-
----
-
-## Core Capabilities
-
-- Real-time availability and date-based search  
-- Dynamic pricing logic  
-- Secure user authentication  
-- Image uploads and property management  
-- End-to-end booking workflows  
+🔗 **Live Demo:** [stay-mori-collection02.vercel.app](https://stay-mori-collection02.vercel.app/)
 
 ---
 
-## Architecture Overview
+## Features
 
-**Frontend**
-- React with reusable, scalable components  
-- Responsive UI built for real-world usage patterns  
-
-**Backend**
-- Node.js and Express REST API  
-- Secure authentication middleware  
-- File uploads and cloud storage integration  
-
-**Data Layer**
-- MongoDB with structured schemas  
-- Indexed queries for fast property and date lookups  
+- **Real time availability** — Date based search preventing double bookings
+- **Secure authentication** — User accounts with protected routes
+- **End to end booking flow** — Search → Select → Checkout → Confirmation
+- **Image uploads** — Cloud hosted property photos via Cloudinary
+- **Responsive design** — Mobile first UI across all devices
 
 ---
 
 ## Tech Stack
 
-**Core**
-- React
-- JavaScript
-- Node.js
-- Express
-- MongoDB
-
-**Supporting**
-- Tailwind CSS
-- Cloudinary
-- Authentication middleware
-
-**Tooling**
-- Git
-- GitHub
-- Vercel
+| Frontend | Backend | Database | Tooling |
+|----------|---------|----------|---------|
+| React | Node.js | MongoDB | Git |
+| JavaScript | Express | Mongoose | Vercel |
+| Tailwind CSS | REST API | | Cloudinary |
 
 ---
 
-## Engineering Focus
-
-- Full-stack system design  
-- Clean API boundaries  
-- Scalable data modeling  
-- Real-world booking logic  
-
-StayMori was built to resemble how real booking platforms operate — not simplified demos.
-
----
-
-## Live Demo
-
-🔗 https://stay-mori-collection02.vercel.app/
+## Architecture
+```
+├── Frontend (React)
+│   ├── Reusable component library
+│   ├── Responsive layouts
+│   └── State management for booking flows
+│
+├── Backend (Node.js/Express)
+│   ├── RESTful API endpoints
+│   ├── Authentication middleware
+│   └── Cloud storage integration
+│
+└── Database (MongoDB)
+    ├── Structured schemas
+    └── Indexed queries for fast lookups
+```
 
 ---
 
 ## Author
 
 **Paige Maggio**  
-Frontend Engineer — React, TypeScript, AI-Driven Interfaces  
+Frontend Engineer — React, TypeScript, Next.js
 
-📍 Montana  
-📧 pmaggio15@gmail.com  
-🌐 https://paigemaggio.dev  
-💼 https://linkedin.com/in/paigemaggio
+[Portfolio](https://paigemaggio.dev) • [LinkedIn](https://linkedin.com/in/paigemaggio) • [GitHub](https://github.com/pmaggio15)
