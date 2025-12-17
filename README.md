@@ -8,7 +8,7 @@ A production grade vacation rental booking platform with real time availability,
 
 ## Overview
 
-StayMori is a full-stack vacation rental platform designed to handle real-time availability, secure transactional workflows, and dynamic property management. The system mirrors real-world booking platforms with authenticated users, database-driven availability, and production-ready architecture.
+StayMori is a full stack vacation rental platform designed to handle real-time availability, secure transactional workflows, and dynamic property management. The system mirrors real-world booking platforms with authenticated users, database-driven availability, and production-ready architecture.
 
 ---
 
@@ -26,7 +26,7 @@ StayMori is a full-stack vacation rental platform designed to handle real-time a
 
 ### Frontend
 - **React** with reusable, scalable component library
-- **Responsive layouts** built for real-world usage patterns
+- **Responsive layouts** built for real world usage patterns
 - **State management** for complex booking workflows
 
 ### Backend
@@ -53,8 +53,8 @@ StayMori is a full-stack vacation rental platform designed to handle real-time a
 
 ## Engineering Highlights
 
-✓ **Full-Stack System Design** — Complete frontend and backend architecture  
-✓ **Real-World Booking Logic** — Availability checks, date validation, and transaction flows  
+✓ **Full Stack System Design** — Complete frontend and backend architecture  
+✓ **Real World Booking Logic** — Availability checks, date validation, and transaction flows  
 ✓ **Clean API Boundaries** — RESTful endpoints with proper error handling  
 ✓ **Scalable Data Modeling** — MongoDB schemas designed for production use  
 
