@@ -8,7 +8,7 @@ A production grade vacation booking platform with real time availability, secure
 
 ## Overview
 
-StayMori is a full stack vacation rental platform designed to handle real-time availability, secure transactional workflows, and dynamic property management. The system mirrors real-world booking platforms with authenticated users, database-driven availability, and production-ready architecture.
+StayMori is a full stack vacation rental platform designed to handle real time availability, secure transactional workflows, and dynamic property management. The system mirrors real world booking platforms with authenticated users, database driven availability, and production ready architecture.
 
 ---
 
