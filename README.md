@@ -62,25 +62,6 @@ Built to resemble how real booking platforms operate — not simplified demos.
 
 ---
 
-## Project Structure
-```
-├── Frontend (React)
-│   ├── Reusable component library
-│   ├── Responsive layouts
-│   └── State management for booking flows
-│
-├── Backend (Node.js/Express)
-│   ├── RESTful API endpoints
-│   ├── Authentication middleware
-│   └── Cloud storage integration
-│
-└── Database (MongoDB)
-    ├── Structured schemas
-    └── Indexed queries for fast lookups
-```
-
----
-
 ## Author
 
 **Paige Maggio**  
