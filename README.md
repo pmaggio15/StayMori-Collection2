@@ -1,6 +1,6 @@
 # StayMori — Full Stack Vacation Booking Platform
 
-A production grade vacation rental booking platform with real time availability, secure authentication, and end to end booking workflows.
+A production grade vacation booking platform with real time availability, secure authentication, and end to end booking workflows.
 
 🔗 **Live Demo:** [stay-mori-collection02.vercel.app](https://stay-mori-collection02.vercel.app/)
 
